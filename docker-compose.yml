@@ -1,0 +1,37 @@
+version: '3'
+services:
+    go-carbon:
+        image: go-carbon
+        build:
+            context: ./go-carbon
+        hostname: go-carbon
+        container_name: go-carbon
+        command: -config=/etc/go-carbon/go-carbon.conf
+        volumes:
+            - ./configs:/etc/go-carbon
+            - ./whisper:/data/graphite/whisper/
+
+    carbonapi:
+        image: carbonapi
+        build:
+            context: ./carbonapi
+        hostname: carbonapi
+        container_name: carbonapi
+        command: -z=http://go-carbon:8080 -graphite=go-carbon:2003 -stdout
+        depends_on:
+            - go-carbon
+
+    grafana:
+        image: grafana/grafana
+        hostname: grafana
+        container_name: grafana
+        ports:
+            - "3000:3000"
+        environment:
+            - GF_SECURITY_ADMIN_PASSWORD=admin
+        volumes:
+            - ./grafana:/var/lib/grafana
+            - ./logs:/var/log/grafana
+        depends_on:
+            - carbonapi
+
