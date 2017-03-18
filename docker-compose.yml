@@ -21,6 +21,39 @@ services:
         depends_on:
             - go-carbon
 
+    prometheus:
+        image: prom/prometheus
+        hostname: prometheus
+        container_name: prometheus
+        volumes:
+            - ./configs:/etc/prometheus
+            - ./prometheus/:/prometheus
+        command:
+            - '-config.file=/etc/prometheus/prometheus.yml'
+            - '-storage.local.path=/prometheus'
+            - '-storage.local.retention=744h'
+        expose:
+            - 9090
+        depends_on:
+            - cadvisor
+
+    node-exporter:
+        image: prom/node-exporter
+        container_name: node-exporter-loki
+        hostname: node-exporter-loki
+
+    cadvisor:
+        image: google/cadvisor
+        container_name: cadvisor
+        hostname: cadvisor
+        volumes:
+            - /:/rootfs:ro
+            - /var/run:/var/run:rw
+            - /sys:/sys:ro
+            - /var/lib/docker/:/var/lib/docker:ro
+        expose:
+            - 8080
+
     grafana:
         image: grafana/grafana
         hostname: grafana
@@ -34,4 +67,5 @@ services:
             - ./logs:/var/log/grafana
         depends_on:
             - carbonapi
+            - prometheus
 
